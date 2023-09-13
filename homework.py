@@ -118,10 +118,6 @@ def read_package(workout_type: str, data: list) -> Training:
         raise NotImplementedError('Данные о тренировке не доступны. '
                                   'Пподдерживаются тренировки: Running, '
                                   'Swimming, Sports Walking')
-
-    #Здесь в качестве текста необходимо указать допустимые тренировки?
-    #Или вызвать словарь тренировок и напечатать его?
-
     return sport[workout_type](*data)
 
 
