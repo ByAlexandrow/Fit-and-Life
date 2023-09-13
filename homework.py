@@ -1,4 +1,4 @@
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass, asdict, field
 from typing import Dict, Type
 
 
@@ -10,7 +10,8 @@ class InfoMessage:
     distance: float
     speed: float
     calories: float
-    Message: str = (
+
+    MESSAGE: str = (
         'Тип тренировки: {}; '
         'Длительность: {:.3f} ч.; '
         'Дистанция: {:.3f} км; '
@@ -19,20 +20,22 @@ class InfoMessage:
     )
 
     def get_message(self) -> str:
-        return self.Message.format(*asdict(self).values())
+        return self.MESSAGE.format(*asdict(self).values())
 
 
 @dataclass
 class Training:
     """Базовый класс тренировки."""
+    action: int
+    duration: float
+    weight: float
+    height: float = field(init=False)
+    length_pool: float = field(init=False)
+    count_pool: int = field(init=False)
+
     LEN_STEP: float = 0.65
     M_IN_KM: int = 1000
     TIME_IN_MIN: int = 60
-
-    def __init__(self, action: int, duration: float, weight: float) -> None:
-        self.action = action
-        self.duration = duration
-        self.weight = weight
 
     def get_distance(self) -> float:
         """Получить дистанцию в км."""
@@ -53,6 +56,7 @@ class Training:
                            self.get_spent_calories())
 
 
+@dataclass
 class Running(Training):
     """Тренировка: бег."""
     CALORIES_MEAN_SPEED_MULTIPLIER: int = 18
@@ -67,44 +71,40 @@ class Running(Training):
 @dataclass
 class SportsWalking(Training):
     """Тренировка: спортивная ходьба."""
-    COLORIES_MEAN_SPEED_1: float = 0.035
-    COLORIES_MEAN_SPEED_2: float = 0.029
+    height: float
+
+    K_WEIGHT: float = 0.035
+    DEGREE_OF_CALORIES: float = 0.029
     FROM_KM_TO_MS: float = 0.278
     FROM_SM_TO_M: int = 100
-
-    def __init__(self, action: float, duration: float, weight: float,
-                 height: int) -> None:
-        super().__init__(action, duration, weight)
-        self.height = height
+    DEGREE: int = 2
 
     def get_spent_calories(self) -> float:
-        return (((self.COLORIES_MEAN_SPEED_1 * self.weight)
-                 + (((self.get_mean_speed() * self.FROM_KM_TO_MS) ** 2)
-                    / (self.height / self.FROM_SM_TO_M))
-                * (self.COLORIES_MEAN_SPEED_2 * self.weight))
+        return (((self.K_WEIGHT * self.weight)
+                 + (((self.get_mean_speed() * self.FROM_KM_TO_MS)
+                     ** self.DEGREE) / (self.height / self.FROM_SM_TO_M))
+                * (self.DEGREE_OF_CALORIES * self.weight))
                 * (self.duration * Training.TIME_IN_MIN))
 
 
 @dataclass
 class Swimming(Training):
     """Тренировка: плавание."""
-    LEN_STEP: float = 1.38
-    CALORIES_MEAN_SPEED_1: float = 1.1
-    CALORIES_MEAN_SPEED_2: int = 2
+    length_pool: float
+    count_pool: float
 
-    def __init__(self, action: float, duration: float, weight: float,
-                 length_pool, count_pool) -> None:
-        super().__init__(action, duration, weight)
-        self.length_pool = length_pool
-        self.count_pool = count_pool
+    LEN_STEP: float = 1.38
+    SPEED_CHANGE: float = 1.1
+    MULTIPLICATION_OF_SPENT_CALORIES: int = 2
 
     def get_mean_speed(self) -> float:
         return (self.length_pool * self.count_pool
                 / Training.M_IN_KM / self.duration)
 
     def get_spent_calories(self) -> float:
-        return ((self.get_mean_speed() + self.CALORIES_MEAN_SPEED_1)
-                * self.CALORIES_MEAN_SPEED_2 * self.weight * self.duration)
+        return ((self.get_mean_speed() + self.SPEED_CHANGE)
+                * self.MULTIPLICATION_OF_SPENT_CALORIES * self.weight
+                * self.duration)
 
 
 def read_package(workout_type: str, data: list) -> Training:
@@ -115,7 +115,13 @@ def read_package(workout_type: str, data: list) -> Training:
         'WLK': SportsWalking,
     }
     if workout_type not in sport:
-        raise NotImplementedError('Ошибка не определена')
+        raise NotImplementedError('Данные о тренировке не доступны. '
+                                  'Пподдерживаются тренировки: Running, '
+                                  'Swimming, Sports Walking')
+
+    #Здесь в качестве текста необходимо указать допустимые тренировки?
+    #Или вызвать словарь тренировок и напечатать его?
+
     return sport[workout_type](*data)
 
 
