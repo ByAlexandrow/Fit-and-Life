@@ -115,9 +115,10 @@ def read_package(workout_type: str, data: list) -> Training:
         'WLK': SportsWalking,
     }
     if workout_type not in sport:
-        raise NotImplementedError('Данные о тренировке не доступны. '
-                                  'Пподдерживаются тренировки: Running, '
-                                  'Swimming, Sports Walking')
+        for elem in sport.keys():
+            raise NotImplementedError('Данные о тренировке не доступны. '
+                                      'Пподдерживаются тренировки:')
+        print(f'{elem} - {sport[elem].__name__}')
     return sport[workout_type](*data)
 
 
